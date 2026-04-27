@@ -1,0 +1,19 @@
+# Python requirements for FunSeq2
+# Note: This pipeline also requires external command-line tools:
+# - bedtools (intersectBed)
+# - tabix
+# - bigWigAverageOverBed (from UCSC tools)
+# - snpMapper (VAT tool)
+# - indelMapper (VAT tool)
+# - TFMpvalue-sc2pv (motif scoring)
+# - fastaFromBed (from BEDTools)
+# - R (for differential expression analysis)
+
+# Python standard library modules used:
+# - os, sys, re, argparse, subprocess, multiprocessing, pathlib, math, glob
+
+# No external Python packages are strictly required for the core functionality,
+# but the following might be useful for enhancements:
+# numpy>=1.20.0  # For numerical operations (optional)
+# pandas>=1.3.0  # For data manipulation (optional)
+

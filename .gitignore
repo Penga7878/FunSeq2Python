@@ -1,0 +1,28 @@
+.DS_Store
+**/.DS_Store
+
+# Outputs / temp
+output*/
+output_*/
+output/
+output_smoke/
+output_clinvar_*/
+pwm/
+*.tmp
+
+# Large inputs / datasets (keep out of repo)
+data_context/
+FunSeq2_dependencies/
+gencode_new/
+
+*.vcf
+*.vcf.gz
+*.bed.gz
+*.bw
+*.fa
+*.tar.gz
+*.tbi
+
+# Optional: if you later add reference indexes
+*.fai
+
