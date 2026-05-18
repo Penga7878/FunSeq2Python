@@ -101,9 +101,10 @@ e.g.,
                         line = 'chr' + line
                     f_out.write(line)
         
-        # Filter using tabix if MAF cutoff is not 1
-        if maf_cutoff != 1:
-            cmd = f"tabix {polymorphism} -B {tmp_file} | awk 'BEGIN{{FS=\"\\t\";OFS=\"\\t\"}} $4 >= {maf_cutoff}'"
+        # Filter using tabix if MAF cutoff is not 1 
+        #Try to get rid of tabix and instead use interal python thing
+        if maf_cutoff != 1: 
+            cmd = f"tabix \"{polymorphism}\" -B \"{tmp_file}\" | awk 'BEGIN{{FS=\"\\t\";OFS=\"\\t\"}} $4 >= {maf_cutoff}'"
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
             for line in result.stdout.strip().split('\n'):
                 if line:
@@ -158,7 +159,7 @@ e.g.,
             self.GERP[id_short] = "."
         
         if os.path.isfile(gerp_file) and os.path.getsize(gerp_file) > 0:
-            cmd = f"awk 'BEGIN{{FS=\"\\t\";OFS=\"\\t\"}}{{print $1,$2,$2+1,$1\":\"$2}}' {infile} | sort -k 1,1 -k 2,2n | uniq | bigWigAverageOverBed {gerp_file} stdin stdout"
+            cmd = f"awk 'BEGIN{{FS=\"\\t\";OFS=\"\\t\"}}{{print $1,$2,$2+1,$1\":\"$2}}' \"{infile}\" | sort -k 1,1 -k 2,2n | uniq | bigWigAverageOverBed \"{gerp_file}\" stdin stdout"
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
             for line in result.stdout.strip().split('\n'):
                 if line:
@@ -171,7 +172,7 @@ e.g.,
     
     def conserved(self, input_file: str, conserved_file: str):
         """Identify variants in conserved regions."""
-        cmd = f"intersectBed -u -a {input_file} -b {conserved_file}"
+        cmd = f"intersectBed -u -a \"{input_file}\" -b \"{conserved_file}\""
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         for line in result.stdout.strip().split('\n'):
             if line:
@@ -182,7 +183,7 @@ e.g.,
     
     def hot_region(self, input_file: str, hot_file: str):
         """Identify variants in HOT (highly occupied target) regions."""
-        cmd = f"intersectBed -a {input_file} -b {hot_file} -wo"
+        cmd = f"intersectBed -a \"{input_file}\" -b \"{hot_file}\" -wo"
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         for line in result.stdout.strip().split('\n'):
             if line:
@@ -196,7 +197,7 @@ e.g.,
     def sensitive(self, input_file: str, sensitive_file: str):
         """Identify variants in sensitive/ultra-sensitive regions."""
         # Regular sensitive regions
-        cmd = f"intersectBed -u -a {input_file} -b {sensitive_file}"
+        cmd = f"intersectBed -u -a \"{input_file}\" -b \"{sensitive_file}\""
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         for line in result.stdout.strip().split('\n'):
             if line:
@@ -204,9 +205,9 @@ e.g.,
                 if len(fields) >= 5:
                     variant_id = f"{fields[0]}\t{fields[1]}\t{fields[3]}\t{fields[4]}"
                     self.SEN[variant_id] = 1
-        
+
         # Ultra-sensitive regions
-        cmd = f"grep 'Ultra' {sensitive_file} | intersectBed -u -a {input_file} -b stdin"
+        cmd = f"grep 'Ultra' \"{sensitive_file}\" | intersectBed -u -a \"{input_file}\" -b stdin"
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         for line in result.stdout.strip().split('\n'):
             if line:
@@ -217,7 +218,7 @@ e.g.,
     
     def read_encode(self, input_file: str, encode_annotation: str):
         """Read ENCODE annotations for non-coding variants."""
-        cmd = f"intersectBed -a {input_file} -b {encode_annotation} -wo"
+        cmd = f"intersectBed -a \"{input_file}\" -b \"{encode_annotation}\" -wo"
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         for line in result.stdout.strip().split('\n'):
             if line:
@@ -246,7 +247,7 @@ e.g.,
             filepath = os.path.join(anno_dir, filename)
             if os.path.isfile(filepath):
                 cate = filename.split('.')[0].upper()
-                cmd = f"intersectBed -a {input_file} -b {filepath} -wo"
+                cmd = f"intersectBed -a \"{input_file}\" -b \"{filepath}\" -wo"
                 result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
                 for line in result.stdout.strip().split('\n'):
                     if line:
@@ -295,7 +296,7 @@ e.g.,
             return
         
         # Intersect variants with bound motifs
-        cmd = (f"intersectBed -a {bound_motif} -b {input_file} -wo | "
+        cmd = (f"intersectBed -a \"{bound_motif}\" -b \"{input_file}\" -wo | "
                f"sort -k 1,1 -k 2,2n | uniq | "
                f"awk 'BEGIN{{OFS=\"\\t\"}}{{print $8,$9,$10,$11,$12,$1,$2,$3,$4,$5,$6,$7}}'")
         
@@ -317,7 +318,7 @@ e.g.,
             
             try:
                 awk_cmd = ("awk 'BEGIN{FS=\"\\t\";OFS=\"\\t\"}{gsub(\"chr\",\"\",$1); print $1,$2,$3}'")
-                fasta_cmd = f"cat {tmp_bed_path} | {awk_cmd} | fastaFromBed -fi {ancestral_file} -bed stdin -fo stdout"
+                fasta_cmd = f"cat \"{tmp_bed_path}\" | {awk_cmd} | fastaFromBed -fi \"{ancestral_file}\" -bed stdin -fo stdout"
                 
                 result = subprocess.run(fasta_cmd, shell=True, capture_output=True, text=True, check=True)
                 lines = result.stdout.split('\n')
@@ -360,7 +361,7 @@ e.g.,
                 AA = ref
                 der_al = alt
             else:  # germline mode
-                id_key = id_short.replace('chr', '')
+                id_key = id_short
                 if id_key in ancestral:
                     AA = ancestral[id_key]
                     if AA == ref:
@@ -522,7 +523,7 @@ e.g.,
         
         # Extract sequences using fastaFromBed
         try:
-            cmd = f"fastaFromBed -fi {reference_file} -bed {out_tmp} -fo stdout"
+            cmd = f"fastaFromBed -fi \"{reference_file}\" -bed \"{out_tmp}\" -fo stdout"
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=True)
             fasta_lines = result.stdout.split('\n')
         except subprocess.CalledProcessError as e:
@@ -674,13 +675,13 @@ e.g.,
                   utr: str, network_dir: str):
         """Link non-coding mutations with genes (promoters & regulatory elements)."""
         # Intersect with different gene regions
-        cmd_pro = f"intersectBed -a {input_file} -b {promoter} -wo | sort -k 1,1 -k 2,2n | uniq"
-        cmd_dis = f"intersectBed -a {input_file} -b {distal} -wo | sort -k 1,1 -k 2,2n | uniq"
-        cmd_intron = f"intersectBed -a {input_file} -b {intron} -wo | sort -k 1,1 -k 2,2n | uniq"
-        cmd_utr = f"intersectBed -a {input_file} -b {utr} -wo | sort -k 1,1 -k 2,2n | uniq"
+        cmd_pro = f"intersectBed -a \"{input_file}\" -b \"{promoter}\" -wo | sort -k 1,1 -k 2,2n | uniq"
+        cmd_dis = f"intersectBed -a \"{input_file}\" -b \"{distal}\" -wo | sort -k 1,1 -k 2,2n | uniq"
+        cmd_intron = f"intersectBed -a \"{input_file}\" -b \"{intron}\" -wo | sort -k 1,1 -k 2,2n | uniq"
+        cmd_utr = f"intersectBed -a \"{input_file}\" -b \"{utr}\" -wo | sort -k 1,1 -k 2,2n | uniq"
         
         # Process each region type
-        for cmd, tag in [(cmd_pro, "Promoter"), (cmd_dis, "Distal"), 
+        for cmd, tag in [(cmd_pro, "Promoter"), (cmd_dis, "Distal"),
                          (cmd_intron, "Intron"), (cmd_utr, "UTR")]:
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
             for line in result.stdout.strip().split('\n'):
@@ -689,51 +690,130 @@ e.g.,
                     if len(fields) >= 9:
                         variant_id = f"{fields[0]}\t{fields[1]}\t{fields[3]}\t{fields[4]}"
                         gene = fields[8]
-                        
+
                         if variant_id not in self.GENE:
                             self.GENE[variant_id] = {}
                         if gene not in self.GENE[variant_id]:
                             self.GENE[variant_id][gene] = {}
-                        self.GENE[variant_id][gene][tag] = 1
-        
-        # Network analysis (simplified - full implementation would load network files)
-        # This would calculate network hub probabilities
+                        # Promoter takes priority — don't overwrite it with other tag types
+                        if "Promoter" not in self.GENE[variant_id][gene]:
+                            self.GENE[variant_id][gene][tag] = 1
+
+        # Network hub analysis: for each variant's associated gene, compute hub probability.
+        # Mirrors Perl gene_link() lines 798-815.
+        if os.path.isdir(network_dir):
+            network = {}     # gene -> {net_name -> degree}
+            net_degrees = {} # net_name -> list of all degrees (unsorted, matches Perl)
+            for fname in os.listdir(network_dir):
+                fpath = os.path.join(network_dir, fname)
+                if not os.path.isfile(fpath):
+                    continue
+                net_name = fname[:-7] if fname.endswith('.degree') else fname
+                with open(fpath) as fh:
+                    for ln in fh:
+                        parts = ln.strip().split()
+                        if len(parts) >= 2:
+                            try:
+                                network.setdefault(parts[0], {})[net_name] = float(parts[1])
+                                net_degrees.setdefault(net_name, []).append(float(parts[1]))
+                            except ValueError:
+                                pass
+
+            for variant_id, genes in self.GENE.items():
+                for gene in genes:
+                    if gene not in network:
+                        continue
+                    prob_gene = []
+                    for net_name in sorted(network[gene]):
+                        degree = network[gene][net_name]
+                        deg_list = net_degrees[net_name]
+                        greater = sum(1 for d in deg_list if d > degree)
+                        prob = round(1.0 - greater / len(deg_list), 3)
+                        prob_gene.append(f"{net_name}({prob:.3f})")
+                        # NET_PROB: max probability across all networks / genes for this variant
+                        if variant_id not in self.NET_PROB or prob > self.NET_PROB[variant_id]:
+                            self.NET_PROB[variant_id] = prob
+                    tmp_hub = gene + ''.join(prob_gene)
+                    self.HUB.setdefault(variant_id, {})[tmp_hub] = 1
     
     @staticmethod
     def coding(snp_input: str, file_interval: str, file_fasta: str, network: str,
                file_selection: str, out: str, out_path: str, nc_mode: int, cds: str) -> int:
         """Coding pipe with VAT (variant annotation tool) analysis."""
+
+        # Load network hub status: gene -> sorted list of network names
+        hub = {}
+        if os.path.isdir(network):
+            for fname in os.listdir(network):
+                fpath = os.path.join(network, fname)
+                if not os.path.isfile(fpath):
+                    continue
+                net_name = fname[:-7] if fname.endswith('.degree') else fname
+                degrees = {}
+                with open(fpath) as fh:
+                    for ln in fh:
+                        parts = ln.strip().split()
+                        if len(parts) >= 2:
+                            try:
+                                degrees[parts[0]] = int(parts[1])
+                            except ValueError:
+                                pass
+                if not degrees:
+                    continue
+                sorted_desc = sorted(degrees.values(), reverse=True)
+                cut = sorted_desc[max(0, int(len(sorted_desc) * 0.25) - 1)]
+                for gene, deg in degrees.items():
+                    if deg >= cut:
+                        hub.setdefault(gene, [])
+                        if net_name not in hub[gene]:
+                            hub[gene].append(net_name)
+
+        # Load negative-selection gene set (all genes in the file qualify)
+        selection = set()
+        if os.path.isfile(file_selection):
+            with open(file_selection) as fh:
+                for ln in fh:
+                    if 'GENE_NAME' not in ln:
+                        g = ln.split()[0]
+                        selection.add(g)
+
+        def hub_field(gene):
+            return '&'.join(sorted(hub[gene])) if gene in hub else '.'
+
+        def sel_field(gene):
+            return 'NegativeSelection' if gene in selection else ''
+
         if nc_mode == 0:
             # Convert to VCF format and run snpMapper
-            cmd = f"awk 'BEGIN{{FS=\"\\t\";OFS=\"\\t\"}}{{print \"##fileformat=VCFv4.0\\n#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\"}}{{print $1,$3,\".\",$4,$5,\".\",\"PASS\",\".\"}}' {snp_input} | snpMapper {file_interval} {file_fasta} | grep '^[^#]'"
+            cmd = f"awk 'BEGIN{{FS=\"\\t\";OFS=\"\\t\"; print \"##fileformat=VCFv4.0\"; print \"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\"}}{{print $1,$3,\".\",$4,$5,\".\",\"PASS\",\".\"}}' \"{snp_input}\" | snpMapper \"{file_interval}\" \"{file_fasta}\" | grep '^[^#]'"
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
             vat_out = result.stdout.strip().split('\n')
-            
+
             if not vat_out or not vat_out[0]:
                 # Fallback to intersectBed
-                cmd = f"intersectBed -a {snp_input} -b {cds} -wo | cut -f 1,3,4,5,9 | sort | uniq"
+                cmd = f"intersectBed -a \"{snp_input}\" -b \"{cds}\" -wo | cut -f 1,3,4,5,9 | sort | uniq"
                 result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
                 with open(out, 'w') as f:
                     for line in result.stdout.strip().split('\n'):
                         if line:
-                            fields = line.split()
+                            fields = line.split('\t')
                             if len(fields) >= 5:
-                                joined = '\t'.join(fields[:4])
-                                f.write(f"{joined}\t.\t{fields[4]}\t.\n")
+                                gene = fields[4]
+                                f.write(f"{fields[0]}\t{fields[1]}\t{fields[2]}\t{fields[3]}\t.\t{gene}\t{hub_field(gene)}\t{sel_field(gene)}\n")
                 return 1
             else:
                 # Process VAT output
                 with open(out, 'w') as f:
                     for line in vat_out:
                         if line and not line.startswith('#'):
-                            fields = line.split()
+                            fields = line.split('\t')
                             if len(fields) >= 8:
                                 info = fields[7].split(',')[0] if fields[7] else ""
                                 if 'VA=' in info:
-                                    match = re.search(r'VA=\\d+:(.*?):', info)
+                                    match = re.search(r'VA=\d+:(.*?):', info)
                                     if match:
                                         gene = match.group(1)
-                                        f.write(f"{fields[0]}\t{fields[1]}\t{fields[3]}\t{fields[4]}\t{fields[7]}\t{gene}\t.\n")
+                                        f.write(f"{fields[0]}\t{fields[1]}\t{fields[3]}\t{fields[4]}\t{fields[7]}\t{gene}\t{hub_field(gene)}\t{sel_field(gene)}\n")
                 return 0
         return 0
     
@@ -876,20 +956,22 @@ e.g.,
                 elif variant_id in self.SEN:
                     score = float(weights.get('SEN', 0))
                 
+                _eval_ns = {'exp': math.exp, 'log': math.log}
+
                 # Motif breaking
                 if variant_id in self.MOTIFBR:
                     tmp_score = weights.get('MOTIFBR', '0')
                     if variant_id in self.BR_PROB:
                         tmp_score = tmp_score.replace('value', str(self.BR_PROB[variant_id]))
                     try:
-                        score += eval(tmp_score)
+                        score += eval(tmp_score, _eval_ns)
                     except:
                         pass
-                
+
                 # HOT region
                 if variant_id in self.HOT:
                     score += float(weights.get('HOT', 0))
-                
+
                 # Conserved or GERP
                 if variant_id in self.CONS:
                     score += float(weights.get('CONS', 0))
@@ -898,37 +980,36 @@ e.g.,
                     try:
                         gerp_val = float(self.GERP[id_short])
                         tmp_score = tmp_score.replace('value', str(gerp_val))
-                        score += eval(tmp_score)
+                        score += eval(tmp_score, _eval_ns)
                     except:
                         pass
-                
+
                 # Gene association (only if not HUB or MOTIFG)
                 if (variant_id in self.GENE and
                     variant_id not in self.HUB and
                     variant_id not in self.MOTIFG):
                     score += float(weights.get('GENE', 0))
-                
+
                 # Network hub
                 if variant_id in self.HUB:
                     tmp_score = weights.get('HUB', '0')
                     if variant_id in self.NET_PROB:
                         tmp_score = tmp_score.replace('value', str(self.NET_PROB[variant_id]))
                     try:
-                        score += eval(tmp_score)
+                        score += eval(tmp_score, _eval_ns)
                     except:
                         pass
-                
+
                 # Motif gain
                 if variant_id in self.MOTIFG:
                     if variant_id in self.G_PROB:
                         g_prob_val = self.G_PROB[variant_id]
-                        import math
                         threshold = math.log(20.25) - math.log(0.25)
                         if g_prob_val < threshold:
                             tmp_score = weights.get('MOTIFG', '0')
                             tmp_score = tmp_score.replace('value', str(g_prob_val))
                             try:
-                                score += eval(tmp_score)
+                                score += eval(tmp_score, _eval_ns)
                             except:
                                 pass
                         else:

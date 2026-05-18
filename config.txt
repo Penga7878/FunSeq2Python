@@ -32,7 +32,7 @@ motif_pfm=motif.PFM
 score_file=motif.score.cut
 
 #### Network file path ####
-network_dir=networks
+network_dir=networks/networks
 
 #### Regulatory network ####
 reg_net=regulatory.network
@@ -47,10 +47,10 @@ reference_file=reference_genome.fa
 ancestral_file=human_ancestor_GRCh37_e59.fa
 
 #### Gene list path ####
-gene_info_dir=gene_lists
+gene_info_dir=gene_lists/gene_lists
 
 #### Recurrence database ####
-cancer_dir=cancer_recurrence
+cancer_dir=cancer_recurrence/cancer_recurrence
 
 #### Gene selection file ####
 selection=GENE.strong_selection.txt
